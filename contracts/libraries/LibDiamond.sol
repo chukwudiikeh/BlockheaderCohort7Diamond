@@ -51,6 +51,8 @@ library LibDiamond {
         mapping(bytes4 => bool) supportedInterfaces;
         // owner of the contract
         address contractOwner;
+        uint count;
+
     }
 
     // Retrieves the Diamond storage struct from the storage slot. Uses inline assembly for efficiency.

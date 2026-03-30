@@ -53,7 +53,7 @@ contract DiamondDeployer is Test, IDiamondCut {
         DiamondLoupeFacet(address(diamond)).facetAddresses();
     }
 
-    function testIncreaseCount() public {
+    function testInDiamondLoupeFacetcreaseCount() public {
         //deploy IncreaseCount facet
         incCount = new IncreaseCount();
 
@@ -69,7 +69,7 @@ contract DiamondDeployer is Test, IDiamondCut {
         );
 
         //upgrade diamond
-        IDiamondCut(address(diamond)).diamondCut(ccutut, address(0x0), "");
+        IDiamondCut(address(diamond)).diamondCut(cut, address(0x0), "");
 
         //call increaseCount function
         IncreaseCount(address(diamond)).increaseCount(5);
