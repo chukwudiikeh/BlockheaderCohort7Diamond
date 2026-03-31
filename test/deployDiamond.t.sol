@@ -6,7 +6,9 @@ import "../contracts/facets/DiamondCutFacet.sol";
 import "../contracts/facets/DiamondLoupeFacet.sol";
 import "../contracts/facets/OwnershipFacet.sol";
 import "../contracts/facets/IncreaseCount.sol";
+import "../contracts/facets/StakingFacet.sol";
 import "../contracts/libraries/LibAppDiamond.sol";
+import "../contracts/StakingToken.sol";
 import "forge-std/Test.sol";
 import "../contracts/Diamond.sol";
 
@@ -17,6 +19,8 @@ contract DiamondDeployer is Test, IDiamondCut {
     DiamondLoupeFacet dLoupe;
     OwnershipFacet ownerF;
     IncreaseCount incCount;
+    StakingFacet stakingFacet;
+    StakingToken stakingToken;
 
     function setUp() public {
         //deploy facets
@@ -78,6 +82,43 @@ contract DiamondDeployer is Test, IDiamondCut {
         uint count = IncreaseCount(address(diamond)).getCount();
 
         assertEq(count, 5);
+    }
+
+    function testStakingFacet() public {
+        // Deploy staking token
+        stakingToken = new StakingToken();
+        
+        // Deploy staking facet
+        stakingFacet = new StakingFacet();
+        
+        // Build cut struct
+        FacetCut[] memory cut = new FacetCut[](1);
+        cut[0] = FacetCut({
+            facetAddress: address(stakingFacet),
+            action: FacetCutAction.Add,
+            functionSelectors: generateSelectors("StakingFacet")
+        });
+        
+        // Upgrade diamond
+        IDiamondCut(address(diamond)).diamondCut(cut, address(0x0), "");
+        
+        // Initialize staking
+        StakingFacet(address(diamond)).initializeStaking(address(stakingToken));
+        
+        // Mint tokens to user
+        address user = address(0x123);
+        stakingToken.mint(user, 1000 ether);
+        
+        // Stake tokens
+        vm.startPrank(user);
+        stakingToken.approve(address(diamond), 1000 ether);
+        StakingFacet(address(diamond)).stake(100 ether);
+        vm.stopPrank();
+        
+        // Verify stake
+        (uint256 amount,,,) = StakingFacet(address(diamond)).getStake(user);
+        assertEq(amount, 100 ether);
+        assertEq(StakingFacet(address(diamond)).getTotalStaked(), 100 ether);
     }
 
     function generateSelectors(
